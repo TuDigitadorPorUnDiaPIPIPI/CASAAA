@@ -1,0 +1,35 @@
+---
+import "../styles/tailwind.css";
+const { title = 'Asistente Domótico', description = 'Controla tu hogar inteligente', } = Astro.props;
+---
+
+<html lang="es" class="h-full">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="description" content={description} />
+		<title>{title}</title>
+	</head>
+	<body class="h-full bg-white text-gray-900 flex flex-col">
+		<header class="border-b border-gray-200">
+			<div class="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
+				<a href="/" class="font-semibold text-xl text-gray-900">
+					Asistente Domótico
+				</a>
+			</div>
+		</header>
+
+		<main class="flex-1 mx-auto max-w-4xl px-4 py-8">
+			<slot />
+		</main>
+
+		<footer class="border-t border-gray-200 bg-gray-50">
+			<div class="mx-auto max-w-4xl px-4 py-6 text-center text-sm text-gray-600">
+				© {new Date().getFullYear()} Asistente Domótico - Tu hogar inteligente te espera
+			</div>
+		</footer>
+	</body>
+</html>
+
+

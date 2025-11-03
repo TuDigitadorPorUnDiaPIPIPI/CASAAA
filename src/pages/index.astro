@@ -1,0 +1,66 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ChatBox from "../components/ChatBox.astro";
+---
+
+<BaseLayout title="Asistente Domótico" description="Interfaz principal del asistente">
+	<section class="mx-auto max-w-4xl">
+		<div class="text-center mb-12">
+			<h1 class="text-4xl font-semibold text-gray-900 mb-4">
+				Asistente Domótico
+			</h1>
+			<p class="text-lg text-gray-600 mb-8">Controla luces, puertas y climatización de tu hogar</p>
+			
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+				<div class="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+					<h3 class="font-medium text-gray-900 mb-1">Control de Luces</h3>
+					<p class="text-sm text-gray-600">Gestiona la iluminación de cada habitación</p>
+				</div>
+				<div class="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+					<h3 class="font-medium text-gray-900 mb-1">Control de Puertas</h3>
+					<p class="text-sm text-gray-600">Abre y cierra puertas de forma inteligente</p>
+				</div>
+				<div class="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+					<h3 class="font-medium text-gray-900 mb-1">Climatización</h3>
+					<p class="text-sm text-gray-600">Controla temperatura y ventilación</p>
+				</div>
+			</div>
+			
+			<!-- Botón de comenzar chat -->
+			<button id="start-chat-btn" class="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-lg transition-colors">
+				<span>Comenzar chat</span>
+			</button>
+		</div>
+
+		<!-- Chat Container -->
+		<div id="chat-container" class="border border-gray-200 rounded-lg bg-white shadow-sm opacity-0 transform translate-y-4 transition-all duration-300">
+			<ChatBox />
+		</div>
+	</section>
+
+	<script>
+		const startBtn = document.getElementById('start-chat-btn');
+		const chatContainer = document.getElementById('chat-container');
+		
+		if (startBtn && chatContainer) {
+			startBtn.addEventListener('click', function() {
+				startBtn.style.transform = 'scale(0.95)';
+				startBtn.style.opacity = '0';
+				
+				setTimeout(() => {
+					startBtn.style.display = 'none';
+					
+					chatContainer.style.opacity = '1';
+					chatContainer.style.transform = 'translateY(0)';
+					
+					setTimeout(() => {
+						const chatInput = document.getElementById('user-input');
+						if (chatInput) {
+							chatInput.focus();
+						}
+					}, 300);
+				}, 200);
+			});
+		}
+	</script>
+</BaseLayout>

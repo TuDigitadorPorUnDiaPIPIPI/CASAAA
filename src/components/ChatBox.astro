@@ -1,0 +1,185 @@
+---
+const { placeholder = 'Escribe un mensaje…' } = Astro.props;
+---
+
+<div class="w-full">
+	<div id="messages" class="flex-1 overflow-y-auto p-4 space-y-6 max-h-96">
+	
+	</div>
+
+	<div class="border-t border-gray-200 p-4">
+		<form id="chat-form" class="flex gap-2" autocomplete="off">
+			<input id="user-input" name="message" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder={placeholder} />
+			<button type="submit" class="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors">
+				Enviar
+			</button>
+		</form>
+		<div id="error" class="mt-2 hidden text-sm text-red-600"></div>
+	</div>
+</div>
+
+<script>
+  // @ts-nocheck
+  const form = /** @type {HTMLFormElement | null} */ (document.getElementById('chat-form'));
+  const input = /** @type {HTMLInputElement | null} */ (document.getElementById('user-input'));
+  const messages = /** @type {HTMLDivElement | null} */ (document.getElementById('messages'));
+  const errorBox = /** @type {HTMLDivElement | null} */ (document.getElementById('error'));
+
+  /** Renders a message bubble 
+   * @param {string} text
+   * @param {'user' | 'assistant'} role
+   */
+  function addMessage(text, role) {
+    const wrapper = document.createElement('div');
+    const isUser = role === 'user';
+    wrapper.className = `flex gap-3 ${isUser ? 'justify-end' : ''}`;
+    
+    if (isUser) {
+      const content = document.createElement('div');
+      content.className = 'max-w-[80%] bg-gray-100 rounded-lg px-3 py-2';
+      const textDiv = document.createElement('div');
+      textDiv.className = 'text-sm text-gray-900 leading-relaxed';
+      textDiv.textContent = text;
+      content.appendChild(textDiv);
+      wrapper.appendChild(content);
+    } else {
+      const avatar = document.createElement('div');
+      avatar.className = 'w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0';
+      const icon = document.createElement('div');
+      icon.className = 'w-4 h-4 bg-gray-600 rounded';
+      avatar.appendChild(icon);
+      
+      const content = document.createElement('div');
+      content.className = 'flex-1';
+      const textDiv = document.createElement('div');
+      textDiv.className = 'text-sm text-gray-900 leading-relaxed';
+      textDiv.textContent = text;
+      content.appendChild(textDiv);
+      
+      wrapper.appendChild(avatar);
+      wrapper.appendChild(content);
+    }
+    
+    if (messages) {
+      messages.appendChild(wrapper);
+      messages.scrollTop = messages.scrollHeight;
+    }
+    return wrapper;
+  }
+
+  /** @param {string=} msg */
+  function setError(msg) {
+    if (!errorBox) return;
+    if (!msg) {
+      errorBox.classList.add('hidden');
+      errorBox.textContent = '';
+      return;
+    }
+    errorBox.textContent = String(msg);
+    errorBox.classList.remove('hidden');
+  }
+
+  function createLoaderBubble() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flex gap-3';
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0';
+    const icon = document.createElement('div');
+    icon.className = 'w-4 h-4 bg-gray-600 rounded';
+    avatar.appendChild(icon);
+    
+    const content = document.createElement('div');
+    content.className = 'flex-1 flex items-center gap-1';
+    
+    const dots = document.createElement('div');
+    dots.className = 'flex items-center gap-1';
+    for (let i = 0; i < 3; i++) {
+      const d = document.createElement('span');
+      d.className = 'inline-block h-2 w-2 bg-gray-400 rounded-full animate-bounce';
+      d.style.animationDelay = `${i * 0.15}s`;
+      dots.appendChild(d);
+    }
+    
+    content.appendChild(dots);
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(content);
+    if (messages) {
+      messages.appendChild(wrapper);
+      messages.scrollTop = messages.scrollHeight;
+    }
+    return wrapper;
+  }
+
+  const mockResponses = {
+    'encender': 'He encendido las luces según tu solicitud.',
+    'prender': 'He encendido las luces según tu solicitud.',
+    'apagar': 'He apagado las luces según tu solicitud.',
+    'temperatura': 'La temperatura actual en tu hogar es de 22°C.',
+    'abrir': 'He abierto la puerta según tu solicitud.',
+    'cerrar': 'He cerrado la puerta según tu solicitud.',
+    'hola': '¡Hola! Soy tu asistente domótico. ¿En qué puedo ayudarte hoy?',
+    'ayuda': 'Puedo ayudarte con: encender/apagar luces, abrir/cerrar puertas y consultar la temperatura actual.'
+  };
+
+  /** @param {string} text */
+  function getMockResponse(text) {
+    const lowerText = text.toLowerCase();
+    for (const [key, response] of Object.entries(mockResponses)) {
+      if (lowerText.includes(key)) {
+        return response;
+      }
+    }
+    return 'No entiendo ese comando. Di "ayuda" para ver los comandos disponibles.';
+  }
+
+  /** @param {string} text */
+  async function sendMessage(text) {
+    setError('');
+    addMessage(text, 'user');
+
+    const loader = createLoaderBubble();
+
+    try {
+      const response = await fetch('http://localhost:3001/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      });
+
+      if (!response.ok) throw new Error(`Error ${response.status}`);
+
+      const data = await response.json();
+      addMessage(data.reply, 'assistant');
+
+    } catch (err) {
+      console.error(err);
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+      const mockResponse = getMockResponse(text);
+      addMessage(mockResponse, 'assistant');
+      setError('Modo offline: usando respuestas simuladas');
+    } finally {
+      loader.remove();
+    }
+  }
+
+  function showWelcomeMessage() {
+    addMessage('¡Hola! Soy tu asistente domótico. Puedo ayudarte a controlar las luces, puertas y consultar la temperatura. ¿En qué puedo ayudarte?', 'assistant');
+  }
+
+  if (form && input) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const inputEl = /** @type {HTMLInputElement} */ (input);
+      const text = String(inputEl.value || '').trim();
+      if (!text) return;
+      inputEl.value = '';
+      sendMessage(text);
+    });
+  }
+
+  showWelcomeMessage();
+</script>
+
+
+
